@@ -1,4 +1,30 @@
-// VectorDataset.h
+/*
+
+The VectorDataset class represents a dataset of DataVector objects. It provides
+functionality to read a dataset from a file, perform k-Nearest Neighbor searches,
+and store the dataset for further analysis.
+The class is designed to work seamlessly with the DataVector class, allowing users
+to create and manage datasets of multi-dimensional vectors easily. It abstracts away
+the complexity of dataset handling, offering a clean interface for common operations.
+
+Constructors:
+1) VectorDataset(): Constructs an empty VectorDataset.
+2) VectorDataset(const std::vector<DataVector>& data): Constructs a VectorDataset with the provided dataset.
+3) ~VectorDataset(): Destructs the VectorDataset and cleans up associated resources.
+
+Data Access Functions
+1) const std::vector<DataVector>& getDataset() const: Gets the dataset.
+2) void setDataset(const std::vector<DataVector>& data): Sets the dataset.
+
+File I/O Functions
+1) void readDataset(const std::string& filename): Reads the dataset from a file.
+
+k-Nearest Neighbor Function
+VectorDataset kNearestNeighbor(const DataVector& testVector, size_t k) const: Performs k-Nearest Neighbor search 
+on the dataset. Sorts the dataset based on difference with the test vector and then selects only the first k ones. 
+
+*/
+
 
 #ifndef VECTORDATASET_H
 #define VECTORDATASET_H
@@ -7,36 +33,28 @@
 #include <vector>
 using namespace std;
 
-class VectorDataset
-{
+class VectorDataset {
 private:
-    // Intialize a vector of DataVector objects to store the dataset
     vector<DataVector> dataset;
 
 public:
-    // Constructor: Initializes the VectorDataset with a specified number of DataVector objects
-    VectorDataset(int numdatavectors = 0);
-
-    // Destructor: Cleans up resources when the VectorDataset object is destroyed
+    // Constructors and destructor
+    VectorDataset();
+    VectorDataset(const std::vector<DataVector>& data);
     ~VectorDataset();
 
-    // Getter method: Returns the dimension of the vectors in the dataset
-    int getDimention();
+    // Data access functions
+    const vector<DataVector>& getDataset() const;
+    void setDataset(const vector<DataVector>& data);
+    void pushValue(const DataVector& value);
+    size_t getDimension() const; 
 
-    // Getter method: Returns the entire dataset as a vector of DataVector objects
-    vector<DataVector> getDataset();
+    // Read dataset from file
+    void readDataset(const string& filename);
 
-    // Getter method: Returns the DataVector at the specified index in the dataset
-    DataVector getDatavector(int index);
-
-    // Reads the dataset from a file with the specified file name
-    void ReadDataset(string fname);
-
-    // Performs k-nearest neighbor algorithm on the dataset for a given DataVector and returns the result
-    VectorDataset knearestneighbor(DataVector a, int k);
-
-    // Prints the entire dataset to the console
-    void printDataset();
+    DataVector getDataVector(int index) const;
+    // k-Nearest Neighbor function
+    VectorDataset kNearestNeighbor(const DataVector& testVector, size_t k) const;
 };
 
-#endif // VECT
+#endif  // VECTORDATASET_H

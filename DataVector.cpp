@@ -1,53 +1,25 @@
-// DataVector.cpp
-
 #include <iostream>
-#include <vector>
 #include "DataVector.h"
-#include <cmath>
 using namespace std;
 
-// Constructor: Initializes the DataVector with a specified dimension
+// Constructor
 DataVector::DataVector(int dimension)
 {
-    v.resize(dimension, 0.0);  // Initialize the vector with zeros
+    setDimension(dimension);
 }
 
-// Destructor: Cleans up resources when the DataVector object is destroyed
+// Destructor
 DataVector::~DataVector()
 {
-    v.clear();  // Clear the vector
 }
 
-// Getter method: Returns the dimension of the vector
-int DataVector::getDimension() const
+// Copy Constructor
+DataVector::DataVector(const DataVector &other) : v(other.v)
 {
-    return v.size();
 }
 
-// Function to assign vector components from a given vector
-void DataVector::AssignVector(vector<double> other)
-{
-    v.resize(other.size());
-    v = other;
-}
-
-// Copy constructor: Creates a new DataVector object as a copy of another DataVector
-DataVector::DataVector(const DataVector &other)
-{
-    v = other.v;  // Copy constructor
-}
-
-// Getter method: Returns the vector components as a vector of doubles
-vector<double> DataVector::getVector() const
-{
-    return v;
-}
-
-// Copy assignment operator: Assigns the content of another DataVector to this DataVector
 DataVector &DataVector::operator=(const DataVector &other)
 {
-    // Assignment operator
-    // Check for self-assignment
     if (this != &other)
     {
         v = other.v;
@@ -55,75 +27,101 @@ DataVector &DataVector::operator=(const DataVector &other)
     return *this;
 }
 
-// Setter method: Sets the dimension of the vector
 void DataVector::setDimension(int dimension)
 {
-    v.clear();            // Clear the vector
-    v.resize(dimension, 0.0);  // Resize the vector with new dimension and initialize with zeros
+    // Clear existing data
+    v.clear();
+    // Resize the vector to the new dimension and initialize with zeros
+    v.resize(dimension, 0.0);
 }
 
-// Operator + for vector addition
-DataVector DataVector::operator+(const DataVector &other)
+
+DataVector DataVector::operator+(const DataVector &other) const
 {
-    if(v.size()!=other.v.size()){
-        cout << "Error: Vectors are not of the same dimension" << endl;
-        return DataVector(0);
+    DataVector result(*this);
+    for (size_t i = 0; i < v.size(); ++i)
+    {
+        result.v[i] += other.v[i];
     }
-    // Operator overload for vector addition
-    DataVector result(v.size());
-    for (int i = 0; i < v.size(); i++)
-        result.v[i] = v[i] + other.v[i];
     return result;
 }
 
-// Operator - for vector subtraction
-DataVector DataVector::operator-(const DataVector &other)
+
+
+// Overloaded operators for vector subtraction
+DataVector DataVector::operator-(const DataVector &other) const
 {
-    if(v.size()!=other.v.size()){
-        cout << "Error: Vectors are not of the same dimension" << endl;
-        return DataVector(0);
+    DataVector result(*this); // Create a copy of the current vector
+    for (size_t i = 0; i < v.size(); ++i)
+    {
+        result.v[i] -= other.v[i];
     }
-    // Operator overload for vector subtraction
-    DataVector result(v.size());
-    for (int i = 0; i < v.size(); i++)
-        result.v[i] = v[i] - other.v[i];
     return result;
 }
 
-// Operator * for dot product
-double DataVector::operator*(const DataVector &other)
+// Overloaded operator for dot product
+double DataVector::operator*(const DataVector &other) const
 {
-    if(v.size()!=other.v.size()){
-        cout << "Error: Vectors are not of the same dimension" << endl;
-        return 0;
-    }
-    // Operator overload for dot product
     double result = 0.0;
-    for (int i = 0; i < v.size(); i++)
+    for (size_t i = 0; i < v.size(); ++i)
+    {
         result += v[i] * other.v[i];
+    }
     return result;
 }
 
-// Method to calculate the Euclidean norm of the vector
+vector<double> DataVector:: getVector() const{
+    return v;
+}
+
+// Member function to calculate the norm (length) of the vector
 double DataVector::norm() const
 {
-    double result = 0.0;
-    for (int i = 0; i < v.size(); i++)
-        result += v[i] * v[i];
-    return sqrt(result);
+    return sqrt(*this * *this);
 }
 
-// Method to calculate the Euclidean distance between two vectors
-double DataVector::dist(const DataVector &other)
+// Member function to calculate the distance between two vectors
+double DataVector::dist(const DataVector &other) const
 {
-    // Calculate the distance between two vectors using the Euclidean norm
-    return (*this - other).norm();
+    DataVector diff = *this - other;
+    return diff.norm();
 }
 
-// Output stream operator overload for printing the vector
-ostream &operator<<(ostream &os, const DataVector &dv)
+void DataVector::setValues(const std::vector<double> &values)
 {
-    for (int i = 0; i < dv.v.size(); i++)
-        os << dv.v[i] << " ";
-    return os;
+    v = values;
+}
+
+size_t DataVector::getDimension() const
+{
+    return v.size();
+}
+
+// Read only. Access value at an index
+double DataVector::operator[](size_t index) const
+{
+    if (index < v.size())
+    {
+        return v[index];
+    }
+    else
+    {
+        // Handle error: Index out of bounds
+        return 0.0;
+    }
+}
+
+// Write.
+
+double &DataVector::operator[](size_t index)
+{
+    if (index < v.size())
+    {
+        return v[index];
+    }
+    else
+    {
+        // Handle error: Index out of bounds
+        return v[0];
+    }
 }

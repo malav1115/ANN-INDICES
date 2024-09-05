@@ -1,125 +1,91 @@
-// VectorDataset.cpp
-
-#include <bits/stdc++.h>
 #include "VectorDataset.h"
-#include <chrono>
+#include <fstream>
+#include <algorithm>
 using namespace std;
 
-// Constructor: Initializes the VectorDataset with a specified number of DataVector objects
-VectorDataset::VectorDataset(int numdatavectors)
-{
-    dataset.resize(numdatavectors);
-}
+// Default constructor
+VectorDataset::VectorDataset() {}
 
-// Destructor: Cleans up resources when the VectorDataset object is destroyed
-VectorDataset::~VectorDataset()
-{
-    dataset.clear();
-}
+// Parameterized constructor with initial dataset
+VectorDataset::VectorDataset(const std::vector<DataVector>& data) : dataset(data) {}
 
-// Getter method: Returns the dimension of the vectors in the dataset
-int VectorDataset::getDimention()
-{
-    return dataset[0].getDimension();
-}
+// Destructor
+VectorDataset::~VectorDataset() {}
 
-// Getter method: Returns the entire dataset as a vector of DataVector objects
-vector<DataVector> VectorDataset::getDataset()
-{
+// Getter for the dataset
+const vector<DataVector>& VectorDataset::getDataset() const{
     return dataset;
 }
-
-// Getter method: Returns the DataVector at the specified index in the dataset
-DataVector VectorDataset::getDatavector(int index)
+void VectorDataset:: pushValue(const DataVector& data){
+    dataset.push_back(data);
+}
+size_t VectorDataset::getDimension() const
 {
+    return dataset.size();
+}
+
+DataVector VectorDataset:: getDataVector(int index) const{
     return dataset[index];
 }
+// Setter for the dataset
+void VectorDataset::setDataset(const vector<DataVector>& data) {
+    dataset = data;
+}
 
-// Reads the dataset from a file with the specified file name
-void VectorDataset::ReadDataset(string fname)
-{
-    auto start = chrono::high_resolution_clock::now();
-    ifstream file(fname);
+// Read dataset from a CSV file
+void VectorDataset::readDataset(const string& filename) {
+    ifstream file(filename);
+    if (!file.is_open()) {
+        cout << "Could not read file!" << endl;
+        return;
+    }
+
+    vector<DataVector> data;
     string line;
 
-    if (file.is_open())
-    {
-        cout << "Reading dataset..." << endl;
-        int index = 0;
-        while (getline(file, line) && index < dataset.size())
-        {
-            stringstream ss(line);
-            string value;
-            vector<double> vectorData;
+    // Read each line from the file
+    while (getline(file, line)) {
+        istringstream iss(line);
+        double value;
+        vector <double> vec;
 
-            // Parse the comma-separated values in each line and convert them to doubles
-            while (getline(ss, value, ','))
-            {
-                vectorData.push_back(stod(value));
-            }
-
-            // Assign the vector data to the DataVector at the current index
-            dataset[index].AssignVector(vectorData);
-            index++;
+        // Parse values separated by commas
+        while (iss >> value) {
+            vec.push_back(value);
+            if (iss.peek() == ',')
+                iss.ignore(); // Ignore the comma
         }
-        file.close();
-        auto stop = chrono::high_resolution_clock::now();
 
-        auto duration = chrono::duration_cast<chrono::milliseconds>(stop - start);
-        int ms = duration.count() % 1000;
-        int s = (duration.count() / 1000) % 60;
-        int m = (duration.count() / (1000 * 60)) % 60;
-        int h = (duration.count() / (1000 * 60 * 60)) % 24;
+        // Create a DataVector object and set its values
+        DataVector vector(vec.size());
+        vector.setValues(vec);
+        data.push_back(vector);
+    }
 
-        cout << "Time taken to read the dataset: ";
-        if (h > 0)
-            cout << h << "h ";
-        if (m > 0 || h > 0)
-            cout << m << "m ";
-        if (s > 0 || m > 0 || h > 0)
-            cout << s << "s ";
-        cout << ms << "ms" << endl;
-    }
-    else
-    {
-        cout << "Unable to open file: " << fname << endl;
-    }
+    file.close();
+
+    // Set the read dataset
+    setDataset(data);
 }
 
-// Performs k-nearest neighbor algorithm on the dataset for a given DataVector and returns the result
-VectorDataset VectorDataset::knearestneighbor(DataVector a, int k)
-{
-    VectorDataset result(k);
+// k-Nearest Neighbor search function
+VectorDataset VectorDataset::kNearestNeighbor(const DataVector& testVector, size_t k) const {
+    VectorDataset resultDataset(*this); // Create a copy of the dataset
+    cout << "Nearest N running" << endl;
 
-    // Calculating the distance of the given vector from all the vectors in the dataset and storing them in a vector of pairs
-    vector<pair<double, int>> distancesAndIndices;
+    // Sort the dataset based on the distance to the testVector
+    auto distanceComparator = [&testVector](const DataVector& a, const DataVector& b) {
+        return a.dist(testVector) < b.dist(testVector);
+    };
 
-    for (int i = 0; i < dataset.size(); ++i)
-    {
-        double distance = a.dist(dataset[i]);
-        distancesAndIndices.push_back({distance, i});
+    sort(resultDataset.dataset.begin(), resultDataset.dataset.end(), distanceComparator);
+
+    cout << "Sorting done" << endl;
+
+    // Keep only the top k vectors
+    if (k < resultDataset.dataset.size()) {
+        resultDataset.dataset.resize(k);
     }
 
-    // Sorting the vector of pairs in ascending order of distance
-    sort(distancesAndIndices.begin(), distancesAndIndices.end());
-
-    // Storing the k-nearest neighbors in the result vector
-    for (int i = 0; i < k; ++i)
-    {
-        int index = distancesAndIndices[i].second;
-        result.dataset[i] = dataset[index];
-    }
-
-    return result;
-}
-
-// Prints the entire dataset to the console
-void VectorDataset::printDataset()
-{
-    for (int i = 0; i < dataset.size(); i++)
-    {
-        for (int j = 0; j < dataset[i].getDimension(); j++)
-            cout << dataset[i].getVector()[j] << " ";
-        cout << endl;
-    }
+    return resultDataset;
 }
